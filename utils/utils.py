@@ -1,4 +1,5 @@
 from PIL import Image, UnidentifiedImageError
+from streamlit_cropper import st_cropper
 from urllib.parse import urlparse
 from random import choice
 from io import BytesIO
@@ -11,18 +12,51 @@ import cv2
 import os
 
 FILE_TYPES = ["png", "bmp", "jpg", "jpeg"]
-FILE_TYPES_V = ["mp4", "avi", "mov", "mkv"]
+FILE_TYPES_V = ["mp4", "avi", "mov", "ogv", "m4v", "webm"]
 URLS = [
     "https://i.ibb.co/LP1RGH5/download-1.jpg",
-    "https://i.ibb.co/qg77xcc/obama.webp"
-    "https://i.ibb.co/JdKLwnR/4928.webp"
+    "https://i.ibb.co/qg77xcc/obama.webp",
+    "https://i.ibb.co/JdKLwnR/4928.webp",
 ]
+URLS_V = [
+    "https://www.youtube.com/watch?v=eseGwoxiqNs",
+    "https://www.youtube.com/watch?v=wrHXA2cSpNU",
+    "https://www.youtube.com/watch?v=oxXpB9pSETo",
+    "https://www.youtube.com/watch?v=cQ54GDm1eL0",
+]
+
+
+def upload_crop():
+    st.set_option('deprecation.showfileUploaderEncoding', False)
+
+    img_file = st.file_uploader(label='Загрузите файл:', type=FILE_TYPES)
+    realtime_update = st.checkbox(label="Обновлять в Реальном Времени", value=True)
+    box_color = st.color_picker(label="Цвет Окна", value='#0000FF')
+    aspect_choice = st.radio(label="Выберите Соотношение Сторон:", options=["1:1", "16:9", "4:3", "2:3", "Свободное"])
+    aspect_dict = {
+        "1:1": (1, 1),
+        "16:9": (16, 9),
+        "4:3": (4, 3),
+        "2:3": (2, 3),
+        "Free": None
+    }
+    aspect_ratio = aspect_dict[aspect_choice]
+
+    if img_file:
+        img = Image.open(img_file)
+        if not realtime_update:
+            st.write("Дабл-клик для обновления")
+        cropped_img = st_cropper(img, realtime_update=realtime_update, box_color=box_color, aspect_ratio=aspect_ratio)
+
+        st.write("Предпросмотр")
+        _ = cropped_img.thumbnail((640, 640))
+        st.image(cropped_img)
 
 
 def uploader(file):
     show_file = st.empty()
     if not file:
-        show_file.info("valid file extension: " + ", ".join(FILE_TYPES))
+        show_file.info("допустимые расширения: " + ", ".join(FILE_TYPES))
         return False
     return file
 
@@ -72,10 +106,17 @@ def upload_image():
 
 
 def upload_video():
-    video = st.file_uploader("Загрузите видео:", type=FILE_TYPES_V)
+    video = st.file_uploader("Загрузите видео с локального устройства:", type=FILE_TYPES_V)
     if video:
         st.video(video)
         temp_file = tempfile.NamedTemporaryFile(delete=False)
         temp_file.write(video.read())
         vf = cv2.VideoCapture(temp_file.name)
         st.write(vf)
+
+
+def put_video_link():
+    st.write("Допустимы различные ссылки, поддерживаемые HTML5, включая YouTube.")
+
+    video_url = validate_url(st.text_input(f"Ссылка на изображение {FILE_TYPES_V}: ", choice(URLS_V)))
+    st.video(video_url)
