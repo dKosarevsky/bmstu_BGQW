@@ -1,15 +1,21 @@
-from PIL import Image, UnidentifiedImageError
-from streamlit_cropper import st_cropper
-from urllib.parse import urlparse
-from random import choice
-from io import BytesIO
-
 import streamlit as st
 import numpy as np
 import requests
+import pathlib
 import tempfile
+import glob
+import pafy
 import cv2
 import os
+
+from PIL import Image, UnidentifiedImageError
+from streamlit_cropper import st_cropper
+from urllib.parse import urlparse
+from mtcnn.mtcnn import MTCNN
+from matplotlib import pyplot
+from random import choice
+from io import BytesIO
+
 
 FILE_TYPES = ["png", "bmp", "jpg", "jpeg"]
 FILE_TYPES_V = ["mp4", "avi", "mov", "ogv", "m4v", "webm"]
@@ -53,10 +59,10 @@ def upload_crop():
         st.image(cropped_img)
 
 
-def uploader(file):
+def uploader(file, type_="foto"):
     show_file = st.empty()
     if not file:
-        show_file.info("допустимые расширения: " + ", ".join(FILE_TYPES))
+        show_file.info("допустимые расширения: " + ", ".join(FILE_TYPES_V if type_ == "video" else FILE_TYPES))
         return False
     return file
 
@@ -106,13 +112,12 @@ def upload_image():
 
 
 def upload_video():
-    video = st.file_uploader("Загрузите видео с локального устройства:", type=FILE_TYPES_V)
+    video = uploader(st.file_uploader("Загрузите видео с локального устройства:", type=FILE_TYPES_V), type_="video")
     if video:
         st.video(video)
         temp_file = tempfile.NamedTemporaryFile(delete=False)
         temp_file.write(video.read())
-        vf = cv2.VideoCapture(temp_file.name)
-        st.write(vf)
+        return temp_file.name
 
 
 def put_video_link():
@@ -120,3 +125,59 @@ def put_video_link():
 
     video_url = validate_url(st.text_input(f"Ссылка на изображение {FILE_TYPES_V}: ", choice(URLS_V)))
     st.video(video_url)
+
+    video = pafy.new(video_url)
+    best = video.getbest(preftype="mp4")
+    return best.url  # TODO add None handler
+
+
+def draw_image_with_boxes(filename, result_list, face_filename):
+    data = pyplot.imread(filename)
+    for i in range(len(result_list)):
+        x1, y1, width, height = result_list[i]["box"]
+        x2, y2 = x1 + width, y1 + height
+        pyplot.subplot(1, len(result_list), i+1)
+        pyplot.axis("off")
+        pyplot.imshow(data[y1:y2, x1:x2])
+        pyplot.savefig(face_filename)
+    pyplot.show()
+    st.image(face_filename)
+
+
+def clear_dir(path):
+    files_c = glob.glob(f"{path}/cropped/*")
+    files_f = glob.glob(f"{path}/only_face/*")
+    files = files_c + files_f
+    for f in files:
+        os.remove(f)
+
+
+def extract_multiple_videos_faces(filenames):
+    i = 1
+    cap = cv2.VideoCapture(filenames)
+    if not cap.isOpened():
+        st.error("Ошибка Открытия Видеопотока или Файла")
+
+    path = os.path.join(pathlib.Path().resolve(), "images")
+    clear_dir(path)
+    fmt = ".jpg"
+    while True:
+        ret, frame = cap.read()
+
+        if ret:
+            cv2.imwrite(os.path.join(path, "cropped", str(i) + fmt), frame)
+            filename = os.path.join(path, "cropped", str(i) + fmt)
+
+            pixels = pyplot.imread(filename)
+            detector = MTCNN()
+            faces = detector.detect_faces(pixels)
+            face_filename_crp = os.path.join(path, "only_face", str(i) + fmt)
+            draw_image_with_boxes(filename, faces, face_filename_crp)
+
+            i += 1
+
+        else:
+            break
+    cv2.waitKey(50)  # 50msec (for debugging)
+    cap.release()
+    cv2.destroyAllWindows()

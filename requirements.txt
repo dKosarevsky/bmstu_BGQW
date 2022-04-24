@@ -11,3 +11,13 @@ opencv-python-headless==4.5.5.64  # https://github.com/opencv/opencv-python
 # plots
 plotly==5.7.0  # https://plotly.com/python/
 matplotlib==3.5.1  # https://matplotlib.org/
+
+# MTCNN
+mtcnn==0.1.1  # https://github.com/ipazc/mtcnn
+
+# Tensorflow
+tensorflow==2.8.0  # https://www.tensorflow.org/
+
+# download YouTube content
+pafy==0.5.5  # https://pypi.org/project/pafy/
+youtube-dl==2020.12.2  # https://youtube-dl.org/

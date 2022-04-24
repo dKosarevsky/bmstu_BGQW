@@ -1,6 +1,6 @@
 import streamlit as st
 
-from utils.utils import upload_video, put_video_link, upload_image, upload_crop
+from utils.utils import upload_video, put_video_link, upload_image, upload_crop, extract_multiple_videos_faces
 
 
 def header():
@@ -30,13 +30,17 @@ def main():
 
     if activity == "1":
         with st.form("video"):
-            upload_video()
+            video = upload_video()
+            if video:
+                extract_multiple_videos_faces(video)
             st.form_submit_button("Загрузить")
 
     elif activity == "2":
-        with st.form("video"):
-            put_video_link()
-            st.form_submit_button("Обновить")
+        # with st.form("video"):
+        video_url = put_video_link()
+        if video_url:
+            extract_multiple_videos_faces(video_url)
+            # st.form_submit_button("Обновить")
 
     # elif activity == "3":
     #     with st.form("photo"):
