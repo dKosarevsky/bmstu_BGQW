@@ -3,6 +3,7 @@ import numpy as np
 import requests
 import pathlib
 import tempfile
+import keras
 import glob
 import pafy
 import cv2
@@ -11,6 +12,7 @@ import os
 from PIL import Image, UnidentifiedImageError
 from streamlit_cropper import st_cropper
 from urllib.parse import urlparse
+from skimage import transform
 from mtcnn.mtcnn import MTCNN
 from matplotlib import pyplot
 from random import choice
@@ -23,6 +25,7 @@ URLS = [
     "https://i.ibb.co/LP1RGH5/download-1.jpg",
     "https://i.ibb.co/qg77xcc/obama.webp",
     "https://i.ibb.co/JdKLwnR/4928.webp",
+    "https://thispersondoesnotexist.com/image",
 ]
 URLS_V = [
     "https://www.youtube.com/watch?v=eseGwoxiqNs",
@@ -88,27 +91,16 @@ def get_image(user_img, user_url):
             st.error("Что-то пошло не так... Попробуйте другую ссылку или загрузите изображение со своего устройства.")
             st.stop()
 
-    arr = np.uint8(img)
-    gray = cv2.cvtColor(arr, cv2.COLOR_BGR2GRAY)
+    st.image(img, width=600)
 
-    c1, c2 = st.columns(2)
-    with c1:
-        st.write("Исходное изображение:")
-        st.image(img, width=300)
-
-    with c2:
-        st.write("Оттенки серого:")
-        st.image(gray, width=300)
-
-    return img, gray
+    return img
 
 
 def upload_image():
     user_img = uploader(st.file_uploader("Загрузите изображение:", type=FILE_TYPES))
 
     user_url = validate_url(st.text_input(f"Ссылка на изображение {FILE_TYPES}: ", choice(URLS)))
-    _, gray_image = get_image(user_img, user_url)
-    return gray_image
+    return get_image(user_img, user_url)
 
 
 def upload_video():
@@ -141,7 +133,7 @@ def draw_image_with_boxes(filename, result_list, face_filename):
         pyplot.imshow(data[y1:y2, x1:x2])
         pyplot.savefig(face_filename)
     pyplot.show()
-    st.image(face_filename)
+    # st.image(face_filename)
 
 
 def clear_dir(path):
@@ -150,6 +142,28 @@ def clear_dir(path):
     files = files_c + files_f
     for f in files:
         os.remove(f)
+
+
+def is_fake(image):
+    st.write("Обработка ...")
+    np_image = np.array(image).astype('float32') / 255
+    np_image = transform.resize(np_image, (224, 224, 3))
+    np_image = np.expand_dims(np_image, axis=0)
+
+    model = keras.models.load_model("models/model.h5")
+    probability = model.predict(np_image)[0][0]
+    st.code(f"Вероятность того, что образ настоящий, равна: {probability:.5f}")
+
+    if probability < 0.05:
+        st.image(image)
+        st.error("Крайне высокая вероятность того, что перед Вами дипфейк, не верьте всему, что вы видите в Интернете.")
+
+    elif probability < 0.4:
+        st.image(image)
+        st.warning("Высокая вероятность того, перед Вами дипфейк, не верьте всему, что вы видите в Интернете.")
+
+    elif probability > 0.9:
+        st.write("Cкорее всего человек настоящий, однако не стоит доверять всему, что вы видите в Интернете.")
 
 
 def extract_multiple_videos_faces(filenames):
@@ -171,10 +185,15 @@ def extract_multiple_videos_faces(filenames):
             pixels = pyplot.imread(filename)
             detector = MTCNN()
             faces = detector.detect_faces(pixels)
-            face_filename_crp = os.path.join(path, "only_face", str(i) + fmt)
-            draw_image_with_boxes(filename, faces, face_filename_crp)
+            if faces:
+                # st.write(faces)
+                face_filename_crp = os.path.join(path, "only_face", str(i) + fmt)
+                draw_image_with_boxes(filename, faces, face_filename_crp)
 
-            i += 1
+                i += 1
+
+                face = cv2.imread(face_filename_crp)
+                is_fake(face)
 
         else:
             break

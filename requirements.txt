@@ -21,3 +21,7 @@ tensorflow==2.8.0  # https://www.tensorflow.org/
 # download YouTube content
 pafy==0.5.5  # https://pypi.org/project/pafy/
 youtube-dl==2020.12.2  # https://youtube-dl.org/
+
+# math
+scipy==1.8.0  # https://scipy.github.io/devdocs/index.html
+scikit_image==0.19.2

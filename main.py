@@ -1,6 +1,6 @@
 import streamlit as st
 
-from utils.utils import upload_video, put_video_link, upload_image, upload_crop, extract_multiple_videos_faces
+from utils.utils import upload_video, put_video_link, upload_image, upload_crop, extract_multiple_videos_faces, is_fake
 
 
 def header():
@@ -22,7 +22,7 @@ def header():
     st.sidebar.markdown("""
         Кибербезопасность сталкивается с новой угрозой, известной как дипфейки. 
         Злоумышленное использование синтетических видео, созданных искусственным интеллектом, 
-        самого мощного кибероружия в истории не за горами.
+        самого мощного кибероружия в истории, не за горами.
     """)
     st.sidebar.markdown("[project repo](https://github.com/dKosarevsky/bmstu_BGQW)")
 
@@ -35,7 +35,8 @@ def main():
         "Выберите действие:", (
             "1. Загрузка видео.",
             "2. Видео по ссылке.",
-            # "3. Обработка фото.",
+            "3. Фото.",
+            "4. Обработка фото.",
         ),
         index=0
     )[:1]
@@ -48,19 +49,20 @@ def main():
             st.form_submit_button("Загрузить")
 
     elif activity == "2":
-        # with st.form("video"):
-        video_url = put_video_link()
-        if video_url:
-            extract_multiple_videos_faces(video_url)
-            # st.form_submit_button("Обновить")
+        with st.form("video"):
+            video_url = put_video_link()
+            st.form_submit_button("Проверить подлинность")
+            if video_url:
+                extract_multiple_videos_faces(video_url)
 
-    # elif activity == "3":
-    #     with st.form("photo"):
-    #         gray_image = upload_image()
-    #         st.form_submit_button("Обновить")
-    #
-    #     st.subheader("Обрезать фото:")
-    #     upload_crop()
+    elif activity == "3":
+        img = upload_image()
+        is_fake(img)
+        st.button("Обновить")
+
+    elif activity == "4":
+        st.subheader("Обрезать фото:")
+        upload_crop()
 
 
 if __name__ == "__main__":
