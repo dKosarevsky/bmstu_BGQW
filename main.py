@@ -38,7 +38,7 @@ def header():
 def main():
     header()
 
-    st.header("Детекция Видео Дипфейка")
+    st.header("Детекция Дипфейка")
     activity = st.radio(
         "Выберите действие:", (
             "1. Загрузка видео.",
@@ -46,32 +46,35 @@ def main():
             "3. Фото.",
             "4. Обработка фото.",
         ),
-        index=2
+        index=0
     )[:1]
 
     model = load_model()
 
     if activity == "1":
-        with st.form("video"):
-            video = upload_video()
-            if video:
+        video = upload_video()
+        if video and st.button("Запустить Детектор"):
+            with st.spinner("Обработка ..."):
                 extract_multiple_videos_faces(video, model)
-            st.form_submit_button("Загрузить")
 
     elif activity == "2":
-        with st.form("video"):
-            video_url = put_video_link()
-            st.form_submit_button("Проверить подлинность")
-            if video_url:
+        video_url = put_video_link()
+
+        if video_url and st.button("Проверить Подлинность"):
+            with st.spinner("Обработка ..."):
                 extract_multiple_videos_faces(video_url, model)
 
     elif activity == "3":
-        img = upload_image()
-        is_fake(img, model)
-        st.button("Обновить")
+        with st.spinner("Загрузка ..."):
+            img = upload_image()
+            if img:
+                is_fake(img, model, static=True)
+
+        st.markdown("---")
+        st.button("Обновить Изображение")
 
     elif activity == "4":
-        st.subheader("Обрезать фото:")
+        st.subheader("Обрезка Фото:")
         upload_crop()
 
 
