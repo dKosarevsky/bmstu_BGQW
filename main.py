@@ -1,6 +1,14 @@
 import streamlit as st
 
-from utils.utils import upload_video, put_video_link, upload_image, upload_crop, extract_multiple_videos_faces, is_fake
+from utils.utils import (
+    upload_video,
+    put_video_link,
+    upload_image,
+    upload_crop,
+    extract_multiple_videos_faces,
+    is_fake,
+    load_model
+)
 
 
 def header():
@@ -41,11 +49,13 @@ def main():
         index=2
     )[:1]
 
+    model = load_model()
+
     if activity == "1":
         with st.form("video"):
             video = upload_video()
             if video:
-                extract_multiple_videos_faces(video)
+                extract_multiple_videos_faces(video, model)
             st.form_submit_button("Загрузить")
 
     elif activity == "2":
@@ -53,11 +63,11 @@ def main():
             video_url = put_video_link()
             st.form_submit_button("Проверить подлинность")
             if video_url:
-                extract_multiple_videos_faces(video_url)
+                extract_multiple_videos_faces(video_url, model)
 
     elif activity == "3":
         img = upload_image()
-        is_fake(img)
+        is_fake(img, model)
         st.button("Обновить")
 
     elif activity == "4":

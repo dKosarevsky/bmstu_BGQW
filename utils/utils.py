@@ -144,13 +144,17 @@ def clear_dir(path):
         os.remove(f)
 
 
-def is_fake(image):
+@st.cache(allow_output_mutation=True, ttl=24*3600)
+def load_model():
+    return keras.models.load_model("models/model.h5")
+
+
+def is_fake(image, model):
     st.write("Обработка ...")
     np_image = np.array(image).astype('float32') / 255
     np_image = transform.resize(np_image, (224, 224, 3))
     np_image = np.expand_dims(np_image, axis=0)
 
-    model = keras.models.load_model("models/model.h5")
     probability = model.predict(np_image)[0][0]
     st.code(f"Вероятность того, что образ настоящий, равна: {probability:.5f}")
 
@@ -166,7 +170,7 @@ def is_fake(image):
         st.write("Cкорее всего человек настоящий, однако не стоит доверять всему, что вы видите в Интернете.")
 
 
-def extract_multiple_videos_faces(filenames):
+def extract_multiple_videos_faces(filenames, model):
     i = 1
     cap = cv2.VideoCapture(filenames)
     if not cap.isOpened():
@@ -193,7 +197,7 @@ def extract_multiple_videos_faces(filenames):
                 i += 1
 
                 face = cv2.imread(face_filename_crp)
-                is_fake(face)
+                is_fake(face, model)
 
         else:
             break
