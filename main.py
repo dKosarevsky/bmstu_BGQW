@@ -18,13 +18,13 @@ def header():
         layout="wide",
     )
     # st.set_page_config(initial_sidebar_state="collapsed")
-    st.sidebar.image('logo.png', width=300)
+    st.sidebar.image("img/logo.png", width=300)
     st.title("МГТУ им. Баумана")
     st.header("Кафедра ИУ7")
     st.markdown("**Выпускная квалификационная работа бакалавра**")
     st.markdown("**Тема:** Метод определения фальсифицированных видеозаписей с использованием генеративно-состязательных нейронных сетей (GAN Deepfake detection)")
-    st.markdown("**Руководитель ВКР:** Рязанова Н.Ю.")
-    st.markdown("**Студент:** Косаревский Д.П.")
+    st.markdown("**Студент:** Дмитрий Петрович Косаревский")
+    st.markdown("**Руководитель ВКР:** к.т.н., доцент Игорь Владимирович Рудаков")
 
     st.sidebar.markdown("# Враг у ворот.")
     st.sidebar.markdown("""
