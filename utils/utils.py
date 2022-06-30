@@ -18,10 +18,11 @@ from streamlit_cropper import st_cropper
 from urllib.parse import urlparse
 from skimage import transform
 from mtcnn.mtcnn import MTCNN
-# from facenet_pytorch import MTCNN
 from matplotlib import pyplot
+from matplotlib.patches import Rectangle, Circle
 from random import choice, randint
 from io import BytesIO
+from numpy import asarray
 
 
 FILE_TYPES = ["png", "bmp", "jpg", "jpeg"]
