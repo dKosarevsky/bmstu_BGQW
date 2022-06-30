@@ -1,19 +1,15 @@
-import face_recognition
+import matplotlib.pyplot as plt
 import streamlit as st
 import numpy as np
 import requests
-import pathlib
 import tempfile
 import keras
-import torch
 import glob
-import time
-import mmcv
 import pafy
 import cv2
 import os
 
-from PIL import Image, UnidentifiedImageError, ImageDraw
+from PIL import Image, UnidentifiedImageError
 from streamlit_cropper import st_cropper
 from urllib.parse import urlparse
 from skimage import transform
@@ -185,6 +181,25 @@ def is_fake(image, model, static=False):
         return probability
 
 
+def show_face_with_bb(frame):
+    face_detector = MTCNN()
+    faces = face_detector.detect_faces(frame)
+    if faces:
+        fig = plt.figure()
+        data = asarray(frame)
+        plt.axis("off")
+        plt.imshow(data)
+        ax = plt.gca()
+        for face in faces:
+            x, y, width, height = face['box']
+            rect = Rectangle((x, y), width, height, fill=False, color='maroon')
+            ax.add_patch(rect)
+            for _, value in face['keypoints'].items():
+                dot = Circle(value, radius=2, color='maroon')
+                ax.add_patch(dot)
+        st.pyplot(fig)
+
+
 def extract_multiple_videos_faces(data, model):
     cap = cv2.VideoCapture(data)
     if not cap.isOpened():
@@ -193,13 +208,11 @@ def extract_multiple_videos_faces(data, model):
     while True:
         ret, frame = cap.read()
         if ret:
-            # face_detector = MTCNN()
-            # faces = face_detector.detect_faces(frame)
-            # if faces:
             proba = is_fake(frame, model)
             if proba < 0.5:
                 st.code(f"Вероятность того, что видео настоящее, равна: {proba:.5f}")
-                st.image(frame)
+                # st.image(frame)
+                show_face_with_bb(frame)
                 st.error("Высокая вероятность того, что перед Вами дипфейк")
                 st.stop()
         else:
