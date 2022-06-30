@@ -169,7 +169,7 @@ def is_fake(image, model, static=False):
     if static:
         st.code(f"Вероятность того, что образ настоящий, равна: {probability:.5f}")
 
-        if probability < 0.1:
+        if probability < 0.25:
             st.error("Крайне высокая вероятность того, что перед Вами дипфейк")
 
         elif probability < 0.5:
